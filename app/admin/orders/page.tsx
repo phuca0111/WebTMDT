@@ -97,13 +97,16 @@ export default async function AdminOrdersPage() {
                                 <TableHead>Tổng tiền</TableHead>
                                 <TableHead>Trạng thái</TableHead>
                                 <TableHead>Ngày đặt</TableHead>
+                                <TableHead className="text-right">Thao tác</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {orders.map((order) => (
                                 <TableRow key={order.id}>
                                     <TableCell className="font-mono text-xs">
-                                        {order.id.slice(0, 8)}...
+                                        <Link href={`/admin/orders/${order.id}`} className="hover:text-blue-600">
+                                            {order.id.slice(0, 8)}...
+                                        </Link>
                                     </TableCell>
                                     <TableCell>
                                         <div>
@@ -113,11 +116,14 @@ export default async function AdminOrdersPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="text-sm">
-                                            {order.items.map((item) => (
+                                            {order.items.slice(0, 2).map((item) => (
                                                 <p key={item.id} className="line-clamp-1">
                                                     {item.quantity}x {item.product.name}
                                                 </p>
                                             ))}
+                                            {order.items.length > 2 && (
+                                                <p className="text-gray-400">+{order.items.length - 2} sản phẩm khác</p>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-bold text-blue-600">
@@ -128,6 +134,13 @@ export default async function AdminOrdersPage() {
                                     </TableCell>
                                     <TableCell className="text-sm text-gray-500">
                                         {formatDate(order.createdAt)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Link href={`/admin/orders/${order.id}`}>
+                                            <Button variant="outline" size="icon">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
                                     </TableCell>
                                 </TableRow>
                             ))}
