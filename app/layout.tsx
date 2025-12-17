@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "4 Đứa - Cửa hàng công nghệ hàng đầu",
+  title: "nhom2team4dua - Cửa hàng công nghệ hàng đầu",
   description: "Mua sắm điện thoại, laptop, tablet và phụ kiện công nghệ chính hãng với giá tốt nhất. Giao hàng nhanh, bảo hành chính hãng.",
   keywords: ["điện thoại", "laptop", "công nghệ", "apple", "samsung", "iphone", "macbook"],
 };

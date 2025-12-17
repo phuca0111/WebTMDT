@@ -1,13 +1,12 @@
 'use client';
 
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
+import { Star, ShoppingCart, Truck, Heart, BadgeCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useCartStore, useWishlistStore } from '@/lib/store';
 import { formatPrice } from '@/lib/format';
-import { useCartStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -29,88 +28,134 @@ export default function ProductCard({
     category,
     stock,
 }: ProductCardProps) {
-    const addItem = useCartStore((state) => state.addItem);
+    const { addItem } = useCartStore();
+    const { toggleItem, isInWishlist } = useWishlistStore();
+    const [isInList, setIsInList] = useState(false);
+
+    useEffect(() => {
+        setIsInList(isInWishlist(id));
+    }, [id, isInWishlist]);
+
+    // Deterministic values based on id
+    const hashCode = id.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
+    const salePercent = 10 + (Math.abs(hashCode) % 25);
+    const originalPrice = Math.round(price * (1 + salePercent / 100));
+    const rating = (4 + (Math.abs(hashCode) % 10) / 10).toFixed(1);
+    const reviews = 100 + (Math.abs(hashCode) % 900);
+    const soldCount = 500 + (Math.abs(hashCode) % 9500);
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
-        e.stopPropagation();
-
-        if (stock <= 0) {
-            toast.error('Sản phẩm đã hết hàng');
-            return;
-        }
-
-        addItem({
-            id,
-            name,
-            price,
-            image,
-        });
-
+        if (stock <= 0) return;
+        addItem({ id, name, price, image });
         toast.success(`Đã thêm "${name}" vào giỏ hàng`);
+    };
+
+    const handleToggleWishlist = (e: React.MouseEvent) => {
+        e.preventDefault();
+        toggleItem({ id, name, price, image, category });
+        setIsInList(!isInList);
+        toast.success(isInList ? `Đã xóa khỏi yêu thích` : `Đã thêm vào yêu thích`);
     };
 
     return (
         <Link href={`/products/${id}`}>
-            <Card className="group h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div className="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-[#1a94ff]/40 hover:shadow-lg transition-all duration-200 h-full flex flex-col">
                 {/* Image */}
-                <div className="relative aspect-square overflow-hidden bg-gray-100">
+                <div className="relative aspect-square bg-gray-50 overflow-hidden">
                     <Image
                         src={image}
                         alt={name}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover group-hover:scale-102 transition-transform duration-300"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
                     />
+
+                    {/* Sale Badge */}
+                    <div className="absolute top-0 left-0 bg-[#ff424e] text-white text-xs font-bold px-1.5 py-1 rounded-br-lg">
+                        -{salePercent}%
+                    </div>
+
+                    {/* Wishlist Button */}
+                    <button
+                        onClick={handleToggleWishlist}
+                        className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all ${isInList
+                                ? 'bg-red-500 text-white'
+                                : 'bg-white/90 text-gray-400 hover:text-red-500 shadow'
+                            }`}
+                    >
+                        <Heart className={`h-4 w-4 ${isInList ? 'fill-current' : ''}`} />
+                    </button>
+
+                    {/* Out of Stock */}
                     {stock <= 0 && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <Badge variant="destructive" className="text-sm">Hết hàng</Badge>
+                            <span className="bg-gray-800 text-white text-sm px-3 py-1 rounded">Hết hàng</span>
                         </div>
                     )}
-                    {stock > 0 && stock <= 5 && (
-                        <Badge className="absolute top-2 left-2 bg-orange-500">
-                            Còn {stock} sản phẩm
-                        </Badge>
+
+                    {/* Quick Add - Desktop */}
+                    {stock > 0 && (
+                        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                                onClick={handleAddToCart}
+                                className="w-full bg-[#1a94ff] hover:bg-[#0d5cb6] text-white text-xs h-8"
+                                size="sm"
+                            >
+                                <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+                                Thêm vào giỏ
+                            </Button>
+                        </div>
                     )}
                 </div>
 
-                <CardContent className="p-4">
-                    {/* Category */}
-                    <Badge variant="secondary" className="mb-2 text-xs">
-                        {category}
-                    </Badge>
+                {/* Content */}
+                <div className="flex-1 p-3 flex flex-col">
+                    {/* Badges Row */}
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-[#1a94ff] bg-[#f0f8ff] px-1.5 py-0.5 rounded font-medium">
+                            <BadgeCheck className="h-3 w-3" />
+                            CHÍNH HÃNG
+                        </span>
+                        {price >= 1000000 && (
+                            <span className="inline-flex items-center gap-0.5 text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium">
+                                <Truck className="h-3 w-3" />
+                                FREESHIP
+                            </span>
+                        )}
+                    </div>
 
                     {/* Name */}
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 min-h-[48px] group-hover:text-blue-600 transition-colors">
+                    <h3 className="text-sm text-gray-800 line-clamp-2 mb-2 leading-snug group-hover:text-[#1a94ff] transition-colors min-h-[40px]">
                         {name}
                     </h3>
 
-                    {/* Description */}
-                    {description && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                            {description}
-                        </p>
-                    )}
-                </CardContent>
+                    {/* Rating */}
+                    <div className="flex items-center gap-1 mb-2">
+                        <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${i < Math.floor(Number(rating)) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-xs text-gray-400">| Đã bán {soldCount > 1000 ? `${(soldCount / 1000).toFixed(1)}k` : soldCount}</span>
+                    </div>
 
-                <CardFooter className="p-4 pt-0 flex items-center justify-between">
                     {/* Price */}
-                    <span className="text-lg font-bold text-blue-600">
-                        {formatPrice(price)}
-                    </span>
-
-                    {/* Add to cart button */}
-                    <Button
-                        size="sm"
-                        onClick={handleAddToCart}
-                        disabled={stock <= 0}
-                        className="gap-1"
-                    >
-                        <ShoppingCart className="h-4 w-4" />
-                        <span className="hidden sm:inline">Thêm</span>
-                    </Button>
-                </CardFooter>
-            </Card>
+                    <div className="mt-auto">
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="text-base font-bold text-[#ff424e]">
+                                {formatPrice(price)}
+                            </span>
+                            <span className="text-xs text-gray-400 line-through">
+                                {formatPrice(originalPrice)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </Link>
     );
 }
