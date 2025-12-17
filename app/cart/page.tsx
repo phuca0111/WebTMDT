@@ -2,34 +2,34 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart, ChevronRight, Truck, Shield } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/format';
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
     const totalPrice = getTotalPrice();
+    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
     if (items.length === 0) {
         return (
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen flex flex-col bg-[#f5f5fa]">
                 <Navbar />
-                <main className="flex-1 flex items-center justify-center bg-gray-50">
-                    <div className="text-center max-w-md mx-auto px-4">
-                        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
-                            <ShoppingBag className="h-10 w-10 text-gray-400" />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md mx-auto px-4 py-16">
+                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                            <ShoppingCart className="h-12 w-12 text-gray-300" />
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h1>
-                        <p className="text-gray-600 mb-6">
-                            Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm của chúng tôi!
+                        <h1 className="text-xl font-medium text-gray-800 mb-2">Giỏ hàng trống</h1>
+                        <p className="text-gray-500 mb-6 text-sm">
+                            Bạn chưa có sản phẩm nào trong giỏ hàng
                         </p>
                         <Link href="/products">
-                            <Button size="lg" className="gap-2">
-                                <ArrowLeft className="h-4 w-4" />
+                            <Button className="bg-[#1a94ff] hover:bg-[#0d5cb6]">
                                 Tiếp tục mua sắm
                             </Button>
                         </Link>
@@ -41,138 +41,176 @@ export default function CartPage() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-[#f5f5fa]">
             <Navbar />
-            <main className="flex-1 bg-gray-50 py-8">
+            <main className="flex-1 py-4">
                 <div className="container mx-auto px-4">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-8">Giỏ hàng của bạn</h1>
+                    {/* Breadcrumb */}
+                    <nav className="flex items-center gap-2 text-sm mb-4">
+                        <Link href="/" className="text-gray-500 hover:text-[#1a94ff]">Trang chủ</Link>
+                        <ChevronRight className="h-3 w-3 text-gray-400" />
+                        <span className="text-gray-800">Giỏ hàng ({totalItems})</span>
+                    </nav>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="flex gap-4">
                         {/* Cart Items */}
-                        <div className="lg:col-span-2 space-y-4">
-                            {items.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="bg-white rounded-xl shadow-sm p-4 flex gap-4"
-                                >
-                                    {/* Image */}
-                                    <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                                        <Image
-                                            src={item.image}
-                                            alt={item.name}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
+                        <div className="flex-1 min-w-0">
+                            {/* Header */}
+                            <div className="bg-white rounded-lg p-4 mb-2">
+                                <div className="flex items-center gap-4">
+                                    <Checkbox id="selectAll" />
+                                    <label htmlFor="selectAll" className="text-sm font-medium text-gray-800 flex-1">
+                                        Tất cả ({items.length} sản phẩm)
+                                    </label>
+                                    <span className="text-sm text-gray-500 hidden sm:block w-24 text-center">Đơn giá</span>
+                                    <span className="text-sm text-gray-500 hidden sm:block w-32 text-center">Số lượng</span>
+                                    <span className="text-sm text-gray-500 hidden sm:block w-24 text-center">Thành tiền</span>
+                                    <span className="w-8"></span>
+                                </div>
+                            </div>
 
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <Link
-                                            href={`/products/${item.id}`}
-                                            className="font-semibold text-gray-900 hover:text-blue-600 line-clamp-2"
-                                        >
-                                            {item.name}
+                            {/* Items */}
+                            <div className="bg-white rounded-lg divide-y">
+                                {items.map((item) => (
+                                    <div key={item.id} className="p-4 flex items-center gap-4">
+                                        <Checkbox />
+
+                                        {/* Image */}
+                                        <Link href={`/products/${item.id}`} className="flex-shrink-0">
+                                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-50">
+                                                <Image src={item.image} alt={item.name} width={80} height={80} className="object-cover w-full h-full" />
+                                            </div>
                                         </Link>
-                                        <p className="text-blue-600 font-semibold mt-1">
-                                            {formatPrice(item.price)}
-                                        </p>
 
-                                        {/* Quantity Controls */}
-                                        <div className="flex items-center gap-4 mt-3">
-                                            <div className="flex items-center border rounded-lg">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                        {/* Name */}
+                                        <div className="flex-1 min-w-0">
+                                            <Link href={`/products/${item.id}`} className="text-sm text-gray-800 hover:text-[#1a94ff] line-clamp-2">
+                                                {item.name}
+                                            </Link>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-xs text-green-600 flex items-center gap-1">
+                                                    <Truck className="h-3 w-3" /> Freeship
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="hidden sm:block w-24 text-center">
+                                            <span className="text-sm font-medium text-[#ff424e]">{formatPrice(item.price)}</span>
+                                        </div>
+
+                                        {/* Quantity */}
+                                        <div className="hidden sm:flex w-32 justify-center">
+                                            <div className="flex items-center border rounded">
+                                                <button
                                                     onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                    className="h-8 w-8"
+                                                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50"
                                                 >
                                                     <Minus className="h-3 w-3" />
-                                                </Button>
-                                                <span className="w-10 text-center text-sm font-medium">
-                                                    {item.quantity}
-                                                </span>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                                </button>
+                                                <span className="w-10 text-center text-sm">{item.quantity}</span>
+                                                <button
                                                     onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    className="h-8 w-8"
+                                                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50"
                                                 >
                                                     <Plus className="h-3 w-3" />
-                                                </Button>
+                                                </button>
                                             </div>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removeItem(item.id)}
-                                                className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
                                         </div>
-                                    </div>
 
-                                    {/* Subtotal */}
-                                    <div className="text-right">
-                                        <p className="text-sm text-gray-500">Tổng</p>
-                                        <p className="font-bold text-gray-900">
-                                            {formatPrice(item.price * item.quantity)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                                        {/* Mobile: Price + Qty */}
+                                        <div className="sm:hidden text-right">
+                                            <p className="text-sm font-medium text-[#ff424e]">{formatPrice(item.price)}</p>
+                                            <div className="flex items-center border rounded mt-1 inline-flex">
+                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 flex items-center justify-center"><Minus className="h-3 w-3" /></button>
+                                                <span className="w-6 text-center text-xs">{item.quantity}</span>
+                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 flex items-center justify-center"><Plus className="h-3 w-3" /></button>
+                                            </div>
+                                        </div>
 
-                            {/* Clear Cart Button */}
-                            <Button
-                                variant="outline"
-                                onClick={clearCart}
-                                className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50"
-                            >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa giỏ hàng
-                            </Button>
+                                        {/* Subtotal */}
+                                        <div className="hidden sm:block w-24 text-center">
+                                            <span className="text-sm font-bold text-[#ff424e]">{formatPrice(item.price * item.quantity)}</span>
+                                        </div>
+
+                                        {/* Delete */}
+                                        <button onClick={() => removeItem(item.id)} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500">
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Order Summary */}
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
+                        {/* Summary */}
+                        <div className="hidden lg:block w-[300px] flex-shrink-0">
+                            <div className="bg-white rounded-lg p-4 sticky top-28">
+                                {/* Shipping Address */}
+                                <div className="mb-4 pb-4 border-b">
+                                    <div className="flex items-center justify-between text-sm mb-2">
+                                        <span className="text-gray-500">Giao tới</span>
+                                        <Link href="#" className="text-[#1a94ff]">Thay đổi</Link>
+                                    </div>
+                                    <p className="text-sm font-medium">Hồ Chí Minh, Việt Nam</p>
+                                </div>
 
-                                <div className="space-y-3 text-sm">
+                                {/* Promotion */}
+                                <div className="mb-4 pb-4 border-b">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500">Khuyến mãi</span>
+                                        <Link href="#" className="text-[#1a94ff]">Chọn hoặc nhập mã</Link>
+                                    </div>
+                                </div>
+
+                                {/* Pricing */}
+                                <div className="space-y-2 mb-4 text-sm">
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Tạm tính ({items.length} sản phẩm)</span>
+                                        <span className="text-gray-500">Tạm tính</span>
                                         <span>{formatPrice(totalPrice)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Phí vận chuyển</span>
+                                        <span className="text-gray-500">Giảm giá</span>
+                                        <span className="text-green-600">-0đ</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Phí vận chuyển</span>
                                         <span className="text-green-600">Miễn phí</span>
                                     </div>
                                 </div>
 
-                                <Separator className="my-4" />
-
-                                <div className="flex justify-between text-lg font-bold">
-                                    <span>Tổng cộng</span>
-                                    <span className="text-blue-600">{formatPrice(totalPrice)}</span>
+                                {/* Total */}
+                                <div className="flex justify-between items-center py-4 border-t">
+                                    <span className="font-medium">Tổng tiền</span>
+                                    <div className="text-right">
+                                        <span className="text-xl font-bold text-[#ff424e]">{formatPrice(totalPrice)}</span>
+                                        <p className="text-xs text-gray-500">(Đã bao gồm VAT)</p>
+                                    </div>
                                 </div>
 
                                 <Link href="/checkout">
-                                    <Button className="w-full mt-6" size="lg">
-                                        Tiến hành thanh toán
-                                    </Button>
-                                </Link>
-
-                                <Link href="/products">
-                                    <Button variant="outline" className="w-full mt-3" size="lg">
-                                        <ArrowLeft className="h-4 w-4 mr-2" />
-                                        Tiếp tục mua sắm
+                                    <Button className="w-full bg-[#ff424e] hover:bg-[#ee3a46] h-12 text-base">
+                                        Mua Hàng ({totalItems})
                                     </Button>
                                 </Link>
                             </div>
                         </div>
                     </div>
+
+                    {/* Mobile Bottom Bar */}
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex items-center gap-4 z-40">
+                        <div className="flex-1">
+                            <p className="text-xs text-gray-500">Tổng tiền</p>
+                            <p className="text-lg font-bold text-[#ff424e]">{formatPrice(totalPrice)}</p>
+                        </div>
+                        <Link href="/checkout">
+                            <Button className="bg-[#ff424e] hover:bg-[#ee3a46] px-8">
+                                Mua Hàng ({totalItems})
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             </main>
+            <div className="lg:hidden h-20"></div>
             <Footer />
         </div>
     );

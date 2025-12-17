@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { jwtVerify } from 'jose';
-import { Package, ShoppingCart, DollarSign, Users, ArrowUpRight, LogOut } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Users, ArrowUpRight, LogOut, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import prisma from '@/lib/db';
@@ -29,7 +29,7 @@ async function verifyAdmin() {
 }
 
 async function getDashboardStats() {
-    const [productsCount, ordersCount, orders, recentOrders] = await Promise.all([
+    const [productsCount, ordersCount, orders, recentOrders, vouchersCount] = await Promise.all([
         prisma.product.count(),
         prisma.order.count(),
         prisma.order.findMany({
@@ -44,6 +44,7 @@ async function getDashboardStats() {
                 },
             },
         }),
+        prisma.voucher.count(),
     ]);
 
     const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total), 0);
@@ -53,6 +54,7 @@ async function getDashboardStats() {
         ordersCount,
         totalRevenue,
         recentOrders,
+        vouchersCount,
     };
 }
 
@@ -119,17 +121,17 @@ export default async function AdminDashboardPage() {
 
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Khách hàng</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Voucher</CardTitle>
+                            <Ticket className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{stats.ordersCount}</div>
+                            <div className="text-2xl font-bold">{stats.vouchersCount}</div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center justify-between">
@@ -173,6 +175,28 @@ export default async function AdminDashboardPage() {
                             </p>
                         </CardContent>
                     </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-between">
+                                Quản lý Voucher
+                                <Link href="/admin/vouchers">
+                                    <Button size="sm" className="gap-1">
+                                        Xem tất cả
+                                        <ArrowUpRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-gray-600 mb-4">
+                                Tạo và quản lý mã giảm giá
+                            </p>
+                            <Link href="/admin/vouchers">
+                                <Button variant="outline">+ Tạo voucher mới</Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Recent Orders */}
@@ -200,9 +224,9 @@ export default async function AdminDashboardPage() {
                                                 {formatPrice(Number(order.total))}
                                             </p>
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                                    order.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                                        order.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
-                                                            'bg-gray-100 text-gray-800'
+                                                order.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                                    order.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {order.status}
                                             </span>

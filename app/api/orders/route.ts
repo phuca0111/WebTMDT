@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 // GET all orders
 export async function GET() {
@@ -28,12 +29,35 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { customerName, customerEmail, customerPhone, address, paymentMethod, items, total } = body;
+        const {
+            customerName, customerEmail, customerPhone, address,
+            paymentMethod, items, total, subtotal, discount, voucherId
+        } = body;
+
+        console.log('Creating order with data:', { customerName, customerEmail, paymentMethod, total, itemCount: items?.length });
 
         // Validate required fields
         if (!customerName || !customerEmail || !customerPhone || !address || !items || items.length === 0) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        // Validate that all products exist
+        const productIds = items.map((item: { productId: string }) => item.productId);
+        const existingProducts = await prisma.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true },
+        });
+
+        const existingProductIds = existingProducts.map(p => p.id);
+        const missingProducts = productIds.filter((id: string) => !existingProductIds.includes(id));
+
+        if (missingProducts.length > 0) {
+            console.error('Missing products:', missingProducts);
+            return NextResponse.json(
+                { error: `Sản phẩm không tồn tại: ${missingProducts.join(', ')}` },
                 { status: 400 }
             );
         }
@@ -45,9 +69,12 @@ export async function POST(request: NextRequest) {
                 customerEmail,
                 customerPhone,
                 address,
+                subtotal: subtotal || total,
+                discount: discount || 0,
                 total,
                 paymentMethod,
                 status: 'PENDING',
+                voucherId: voucherId || null,
                 items: {
                     create: items.map((item: { productId: string; quantity: number; price: number }) => ({
                         productId: item.productId,
@@ -65,6 +92,8 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        console.log('Order created successfully:', order.id);
+
         // Update product stock
         for (const item of items) {
             await prisma.product.update({
@@ -77,11 +106,32 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        // Send confirmation email asynchronously
+        try {
+            await sendOrderConfirmationEmail({
+                email: customerEmail,
+                orderId: order.id,
+                customerName,
+                total: Number(order.total),
+                address,
+                items: order.items.map(item => ({
+                    name: item.product.name,
+                    quantity: item.quantity,
+                    price: Number(item.price),
+                    image: item.product.image
+                }))
+            });
+            console.log('Confirmation email sent to:', customerEmail);
+        } catch (emailError) {
+            console.error('Error sending confirmation email:', emailError);
+            // Don't fail the request if email fails
+        }
+
         return NextResponse.json(order, { status: 201 });
     } catch (error) {
         console.error('Order creation error:', error);
         return NextResponse.json(
-            { error: 'Failed to create order' },
+            { error: 'Failed to create order', details: String(error) },
             { status: 500 }
         );
     }

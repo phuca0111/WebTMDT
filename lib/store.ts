@@ -73,3 +73,60 @@ export const useCartStore = create<CartStore>()(
         }
     )
 );
+
+// Wishlist Store
+export interface WishlistItem {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    category: string;
+}
+
+interface WishlistStore {
+    items: WishlistItem[];
+    addItem: (item: WishlistItem) => void;
+    removeItem: (id: string) => void;
+    toggleItem: (item: WishlistItem) => void;
+    isInWishlist: (id: string) => boolean;
+    clearWishlist: () => void;
+}
+
+export const useWishlistStore = create<WishlistStore>()(
+    persist(
+        (set, get) => ({
+            items: [],
+
+            addItem: (item) => {
+                const items = get().items;
+                if (!items.find((i) => i.id === item.id)) {
+                    set({ items: [...items, item] });
+                }
+            },
+
+            removeItem: (id) => {
+                set({ items: get().items.filter((i) => i.id !== id) });
+            },
+
+            toggleItem: (item) => {
+                const items = get().items;
+                const exists = items.find((i) => i.id === item.id);
+                if (exists) {
+                    set({ items: items.filter((i) => i.id !== item.id) });
+                } else {
+                    set({ items: [...items, item] });
+                }
+            },
+
+            isInWishlist: (id) => {
+                return get().items.some((i) => i.id === id);
+            },
+
+            clearWishlist: () => set({ items: [] }),
+        }),
+        {
+            name: 'wishlist-storage',
+        }
+    )
+);
+
