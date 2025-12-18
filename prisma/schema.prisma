@@ -20,6 +20,20 @@ model User {
   reviews   Review[]
 }
 
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  icon        String?
+  description String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  products    Product[]
+}
+
 model Product {
   id          String      @id @default(uuid())
   name        String
@@ -27,8 +41,11 @@ model Product {
   price       Decimal     @db.Decimal(10, 2)
   image       String
   category    String
+  categoryId  String?
+  categoryRef Category?   @relation(fields: [categoryId], references: [id])
   brand       String?
   stock       Int         @default(0)
+  soldCount   Int         @default(0)  // Số lượng đã bán thực tế
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   

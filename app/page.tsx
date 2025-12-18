@@ -19,6 +19,7 @@ async function getFlashSaleProducts() {
       price: true,
       image: true,
       stock: true,
+      soldCount: true,
     },
   });
   return products.map(p => ({

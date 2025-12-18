@@ -12,6 +12,7 @@ interface Product {
     price: number;
     image: string;
     stock: number;
+    soldCount?: number;
 }
 
 interface FlashSaleProps {
@@ -93,7 +94,13 @@ export default function FlashSale({ products }: FlashSaleProps) {
                 {products.slice(0, 10).map((product, index) => {
                     const salePercent = 20 + ((index * 7) % 30);
                     const originalPrice = Math.round(product.price * (1 + salePercent / 100));
-                    const soldPercent = Math.min(90, 30 + ((index * 13) % 60));
+
+                    // Tính % đã bán thực tế
+                    const totalStock = product.stock + (product.soldCount || 0);
+                    const soldCount = product.soldCount || 0;
+                    const soldPercent = totalStock > 0
+                        ? Math.min(100, Math.round((soldCount / totalStock) * 100))
+                        : 0;
 
                     return (
                         <Link
@@ -133,10 +140,10 @@ export default function FlashSale({ products }: FlashSaleProps) {
                                     <div className="relative h-4 bg-red-100 rounded-full overflow-hidden">
                                         <div
                                             className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all"
-                                            style={{ width: `${soldPercent}%` }}
+                                            style={{ width: `${Math.max(5, soldPercent)}%` }}
                                         />
                                         <span className="absolute inset-0 flex items-center justify-center text-[10px] text-white font-medium">
-                                            Đã bán {soldPercent}%
+                                            {soldCount > 0 ? `Đã bán ${soldCount}` : 'Đang bán chạy'}
                                         </span>
                                     </div>
                                 </div>

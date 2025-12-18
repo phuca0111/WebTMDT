@@ -94,13 +94,16 @@ export async function POST(request: NextRequest) {
 
         console.log('Order created successfully:', order.id);
 
-        // Update product stock
+        // Update product stock and soldCount
         for (const item of items) {
             await prisma.product.update({
                 where: { id: item.productId },
                 data: {
                     stock: {
                         decrement: item.quantity,
+                    },
+                    soldCount: {
+                        increment: item.quantity,  // Tăng số lượng đã bán
                     },
                 },
             });

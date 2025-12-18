@@ -15,11 +15,21 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 
-const categories = [
-    { name: 'Điện thoại', href: '/products?category=Điện+thoại', icon: Smartphone },
-    { name: 'Laptop', href: '/products?category=Laptop', icon: Laptop },
-    { name: 'Tablet', href: '/products?category=Tablet', icon: Tablet },
-    { name: 'Phụ kiện', href: '/products?category=Phụ+kiện', icon: Headphones },
+const defaultCategories = [
+    { name: 'Nhà Sách', href: '/products?category=Nhà+Sách', icon: '📚' },
+    { name: 'Điện Thoại', href: '/products?category=Điện+Thoại+-+Máy+Tính+Bảng', icon: '📱' },
+    { name: 'Thiết Bị Số', href: '/products?category=Thiết+Bị+Số+-+Phụ+Kiện', icon: '🎧' },
+    { name: 'Điện Gia Dụng', href: '/products?category=Điện+Gia+Dụng', icon: '🔌' },
+    { name: 'Làm Đẹp', href: '/products?category=Làm+Đẹp+-+Sức+Khỏe', icon: '💄' },
+    { name: 'Thời Trang Nữ', href: '/products?category=Thời+Trang+Nữ', icon: '👗' },
+    { name: 'Thời Trang Nam', href: '/products?category=Thời+Trang+Nam', icon: '👔' },
+    { name: 'Thể Thao', href: '/products?category=Thể+Thao+-+Dã+Ngoại', icon: '⚽' },
+    { name: 'Máy Vi Tính', href: '/products?category=Máy+Vi+Tính', icon: '💻' },
+    { name: 'Nhà Cửa', href: '/products?category=Nhà+Cửa+-+Đời+Sống', icon: '🏠' },
+    { name: 'Mẹ & Bé', href: '/products?category=Đồ+Chơi+-+Mẹ+%26+Bé', icon: '🧸' },
+    { name: 'Bách Hóa', href: '/products?category=Bách+Hóa+Online', icon: '🛒' },
+    { name: 'Hàng Quốc Tế', href: '/products?category=Hàng+Quốc+Tế', icon: '🌍' },
+    { name: 'Xe Cộ', href: '/products?category=Ô+Tô+-+Xe+Máy+-+Xe+Đạp', icon: '🏍️' },
 ];
 
 interface UserData {
@@ -219,14 +229,14 @@ export default function Navbar() {
                             </button>
 
                             {showCategories && (
-                                <div className="absolute top-full left-0 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[200px] z-50">
-                                    {categories.map((category) => (
+                                <div className="absolute top-full left-0 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[220px] max-h-[400px] overflow-y-auto z-50">
+                                    {defaultCategories.map((category) => (
                                         <Link
                                             key={category.name}
                                             href={category.href}
                                             className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-[#f5f5fa] hover:text-[#1a94ff] transition-colors"
                                         >
-                                            <category.icon className="h-5 w-5" />
+                                            <span className="text-lg">{category.icon}</span>
                                             {category.name}
                                         </Link>
                                     ))}
@@ -234,14 +244,14 @@ export default function Navbar() {
                             )}
                         </div>
 
-                        {/* Quick Links */}
-                        {categories.map((category) => (
+                        {/* Quick Links - Show first 6 categories */}
+                        {defaultCategories.slice(0, 6).map((category) => (
                             <Link
                                 key={category.name}
                                 href={category.href}
                                 className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-[#1a94ff] transition-colors"
                             >
-                                <category.icon className="h-4 w-4" />
+                                <span>{category.icon}</span>
                                 {category.name}
                             </Link>
                         ))}
@@ -259,14 +269,14 @@ export default function Navbar() {
                 <div className="lg:hidden bg-white border-b shadow-lg">
                     <div className="container mx-auto px-4 py-4">
                         <nav className="space-y-1">
-                            {categories.map((category) => (
+                            {defaultCategories.map((category) => (
                                 <Link
                                     key={category.name}
                                     href={category.href}
                                     className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-[#f5f5fa] hover:text-[#1a94ff] rounded-lg transition-all"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    <category.icon className="h-5 w-5" />
+                                    <span className="text-lg">{category.icon}</span>
                                     {category.name}
                                 </Link>
                             ))}

@@ -46,11 +46,22 @@ async function getProducts({
         case 'price-asc': orderBy = { price: 'asc' }; break;
         case 'price-desc': orderBy = { price: 'desc' }; break;
         case 'name': orderBy = { name: 'asc' }; break;
+        case 'bestseller': orderBy = { soldCount: 'desc' }; break;
         default: orderBy = { createdAt: 'desc' };
     }
 
     const [products, total] = await Promise.all([
-        prisma.product.findMany({ where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+        prisma.product.findMany({
+            where,
+            orderBy,
+            skip: (page - 1) * PAGE_SIZE,
+            take: PAGE_SIZE,
+            include: {
+                reviews: {
+                    select: { rating: true }
+                }
+            }
+        }),
         prisma.product.count({ where }),
     ]);
     return { products, total, totalPages: Math.ceil(total / PAGE_SIZE) };
@@ -253,18 +264,26 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                                 {products.length > 0 ? (
                                     <>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-6">
-                                            {products.map((product) => (
-                                                <ProductCard
-                                                    key={product.id}
-                                                    id={product.id}
-                                                    name={product.name}
-                                                    description={product.description}
-                                                    price={Number(product.price)}
-                                                    image={product.image}
-                                                    category={product.category}
-                                                    stock={product.stock}
-                                                />
-                                            ))}
+                                            {products.map((product) => {
+                                                const avgRating = product.reviews.length > 0
+                                                    ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
+                                                    : 0;
+                                                return (
+                                                    <ProductCard
+                                                        key={product.id}
+                                                        id={product.id}
+                                                        name={product.name}
+                                                        description={product.description}
+                                                        price={Number(product.price)}
+                                                        image={product.image}
+                                                        category={product.category}
+                                                        stock={product.stock}
+                                                        soldCount={product.soldCount}
+                                                        avgRating={avgRating}
+                                                        reviewCount={product.reviews.length}
+                                                    />
+                                                );
+                                            })}
                                         </div>
 
                                         {/* Pagination */}
