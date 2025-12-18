@@ -16,7 +16,14 @@ interface ProductDetailPageProps {
 }
 
 async function getProduct(id: string) {
-    const product = await prisma.product.findUnique({ where: { id } });
+    const product = await prisma.product.findUnique({
+        where: { id },
+        include: {
+            reviews: {
+                select: { rating: true }
+            }
+        }
+    });
     return product;
 }
 
@@ -24,6 +31,11 @@ async function getRelatedProducts(category: string, excludeId: string) {
     const products = await prisma.product.findMany({
         where: { category, id: { not: excludeId } },
         take: 6,
+        include: {
+            reviews: {
+                select: { rating: true }
+            }
+        }
     });
     return products;
 }
@@ -36,13 +48,17 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
     const relatedProducts = await getRelatedProducts(product.category, product.id);
 
-    // Deterministic values based on id
+    // Tính rating thực từ reviews
+    const avgRating = product.reviews.length > 0
+        ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
+        : 0;
+    const reviewCount = product.reviews.length;
+    const soldCount = product.soldCount;
+
+    // Tính giá sale
     const hashCode = id.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
     const salePercent = 10 + (Math.abs(hashCode) % 25);
     const originalPrice = Math.round(Number(product.price) * (1 + salePercent / 100));
-    const rating = (4 + (Math.abs(hashCode) % 10) / 10).toFixed(1);
-    const reviews = 100 + (Math.abs(hashCode) % 900);
-    const soldCount = 500 + (Math.abs(hashCode) % 9500);
 
     return (
         <div className="min-h-screen flex flex-col bg-[#f5f5fa]">
@@ -124,11 +140,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
                                 {/* Rating & Sold */}
                                 <div className="flex items-center gap-4 mb-4 text-sm">
-                                    <div className="flex items-center gap-1">
-                                        <span className="font-medium">{rating}</span>
-                                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                        <span className="text-gray-400">({reviews})</span>
-                                    </div>
+                                    {avgRating > 0 ? (
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-medium">{avgRating.toFixed(1)}</span>
+                                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                            <span className="text-gray-400">({reviewCount})</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-400">Chưa có đánh giá</span>
+                                    )}
                                     <span className="text-gray-300">|</span>
                                     <span className="text-gray-500">Đã bán {soldCount > 1000 ? `${(soldCount / 1000).toFixed(1)}k` : soldCount}</span>
                                 </div>
@@ -203,18 +223,26 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                             <div className="bg-white rounded-lg p-4">
                                 <h2 className="text-base font-semibold text-gray-800 mb-4">Sản phẩm tương tự</h2>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                                    {relatedProducts.map((p) => (
-                                        <ProductCard
-                                            key={p.id}
-                                            id={p.id}
-                                            name={p.name}
-                                            description={p.description}
-                                            price={Number(p.price)}
-                                            image={p.image}
-                                            category={p.category}
-                                            stock={p.stock}
-                                        />
-                                    ))}
+                                    {relatedProducts.map((p) => {
+                                        const pAvgRating = p.reviews.length > 0
+                                            ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length
+                                            : 0;
+                                        return (
+                                            <ProductCard
+                                                key={p.id}
+                                                id={p.id}
+                                                name={p.name}
+                                                description={p.description}
+                                                price={Number(p.price)}
+                                                image={p.image}
+                                                category={p.category}
+                                                stock={p.stock}
+                                                soldCount={p.soldCount}
+                                                avgRating={pAvgRating}
+                                                reviewCount={p.reviews.length}
+                                            />
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>

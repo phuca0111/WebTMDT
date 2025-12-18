@@ -10,24 +10,24 @@ export default function Footer() {
                     <div>
                         <h4 className="font-medium text-base mb-4 text-gray-900">Hỗ trợ khách hàng</h4>
                         <ul className="space-y-2 text-xs text-gray-500">
-                            <li><Link href="/" className="hover:underline">Hotline: <strong className="text-gray-800">1900-6035</strong> <span className="text-gray-400">(1000đ/phút)</span></Link></li>
+                            <li><Link href="/" className="hover:underline">Hotline: <strong className="text-gray-800">1900-9999</strong> <span className="text-gray-400">(1000đ/phút)</span></Link></li>
                             <li><Link href="/" className="hover:underline">Các câu hỏi thường gặp</Link></li>
                             <li><Link href="/" className="hover:underline">Gửi yêu cầu hỗ trợ</Link></li>
                             <li><Link href="/" className="hover:underline">Hướng dẫn đặt hàng</Link></li>
                             <li><Link href="/" className="hover:underline">Phương thức vận chuyển</Link></li>
                             <li><Link href="/" className="hover:underline">Chính sách đổi trả</Link></li>
-                            <li><Link href="/" className="hover:underline">Hỗ trợ khách hàng: hotro@tiki.vn</Link></li>
+                            <li><Link href="/" className="hover:underline">Hỗ trợ khách hàng: hotro@nhom2.vn</Link></li>
                         </ul>
                     </div>
 
                     {/* Column 2: About & Payment */}
                     <div>
-                        <h4 className="font-medium text-base mb-4 text-gray-900">Về Tiki</h4>
+                        <h4 className="font-medium text-base mb-4 text-gray-900">Nhom2</h4>
                         <ul className="space-y-2 text-xs text-gray-500 mb-6">
                             <li><Link href="/" className="hover:underline">Giới thiệu Tiki</Link></li>
                             <li><Link href="/" className="hover:underline">Tuyển dụng</Link></li>
                             <li><Link href="/" className="hover:underline">Chính sách bảo mật thanh toán</Link></li>
-                            <li><Link href="/" className="hover:underline">Bán hàng cùng Tiki</Link></li>
+                            <li><Link href="/" className="hover:underline">Bán hàng cùng Nhom2</Link></li>
                         </ul>
 
                         <h4 className="font-medium text-base mb-4 text-gray-900">Thanh toán</h4>
@@ -52,11 +52,11 @@ export default function Footer() {
                         <div className="flex gap-2 text-xs text-gray-500">
                             <div className="flex flex-col items-center gap-1">
                                 <Truck className="h-6 w-6 text-[#1a94ff]" />
-                                <span>TikiNOW</span>
+                                <span>Khangnhanhnhanh</span>
                             </div>
                             <div className="flex flex-col items-center gap-1 ml-4">
                                 <Package className="h-6 w-6 text-green-600" />
-                                <span>TikiFast</span>
+                                <span>Anhnhanhnhanh</span>
                             </div>
                         </div>
                     </div>
@@ -70,7 +70,7 @@ export default function Footer() {
                             <Link href="#" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white flex items-center justify-center hover:opacity-90"><Instagram className="h-4 w-4" /></Link>
                         </div>
 
-                        <h4 className="font-medium text-base mb-4 text-gray-900">Tải ứng dụng Tiki</h4>
+                        <h4 className="font-medium text-base mb-4 text-gray-900">Tải ứng dụng PhucNow</h4>
                         <div className="flex items-center gap-2">
                             <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center text-xs text-center p-2 text-gray-500 border border-gray-200">
                                 QR Code
@@ -85,13 +85,13 @@ export default function Footer() {
 
                 <div className="border-t border-gray-100 pt-6 mt-6 text-xs text-gray-500">
                     <p className="mb-2">
-                        Địa chỉ văn phòng: 52 Út Tịch, Phường 4, Quận Tân Bình, Thành phố Hồ Chí Minh
+                        Địa chỉ văn phòng: 01 Đ. Võ Văn Ngân, Linh Chiểu, Thủ Đức, Thành phố Hồ Chí Minh
                     </p>
                     <p className="mb-2">
-                        Nhận hàng, góp ý: 123 Nguyễn Văn Trỗi, P.2, Q. Tân Bình, TP. Hồ Chí Minh
+                        Nhận hàng, góp ý: 01 Đ. Võ Văn Ngân, Linh Chiểu, Thủ Đức, Thành phố Hồ Chí Minh
                     </p>
                     <p>
-                        © 2024 - Bản quyền của Công Ty Cổ Phần Ti Ki - Tiki.vn
+                        © 2025 Bản quyền đây là đề tài do các thành viên nhóm 2 Môn Thương mại điện tử ĐHSPKT thực hiện, Phúc,Khang,Anh
                     </p>
                 </div>
 

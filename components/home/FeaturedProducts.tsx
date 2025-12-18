@@ -7,6 +7,11 @@ async function getFeaturedProducts() {
     return prisma.product.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
+        include: {
+            reviews: {
+                select: { rating: true }
+            }
+        }
     });
 }
 
@@ -27,19 +32,28 @@ export default async function FeaturedProducts() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {products.map((product) => (
-                    <ProductCard
-                        key={product.id}
-                        id={product.id}
-                        name={product.name}
-                        description={product.description}
-                        price={Number(product.price)}
-                        image={product.image}
-                        category={product.category}
-                        stock={product.stock}
-                    />
-                ))}
+                {products.map((product) => {
+                    const avgRating = product.reviews.length > 0
+                        ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
+                        : 0;
+                    return (
+                        <ProductCard
+                            key={product.id}
+                            id={product.id}
+                            name={product.name}
+                            description={product.description}
+                            price={Number(product.price)}
+                            image={product.image}
+                            category={product.category}
+                            stock={product.stock}
+                            soldCount={product.soldCount}
+                            avgRating={avgRating}
+                            reviewCount={product.reviews.length}
+                        />
+                    );
+                })}
             </div>
         </section>
     );
 }
+

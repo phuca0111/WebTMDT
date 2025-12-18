@@ -528,7 +528,31 @@ async function main() {
   await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
   console.log('🗑️ Cleared existing data');
+
+  // Create 14 categories
+  const categoriesData = [
+    { name: 'Nhà Sách', slug: 'nha-sach', icon: '📚', order: 1 },
+    { name: 'Nhà Cửa - Đời Sống', slug: 'nha-cua-doi-song', icon: '🏠', order: 2 },
+    { name: 'Điện Thoại - Máy Tính Bảng', slug: 'dien-thoai-may-tinh-bang', icon: '📱', order: 3 },
+    { name: 'Đồ Chơi - Mẹ & Bé', slug: 'do-choi-me-be', icon: '🧸', order: 4 },
+    { name: 'Thiết Bị Số - Phụ Kiện', slug: 'thiet-bi-so-phu-kien', icon: '🎧', order: 5 },
+    { name: 'Điện Gia Dụng', slug: 'dien-gia-dung', icon: '🔌', order: 6 },
+    { name: 'Làm Đẹp - Sức Khỏe', slug: 'lam-dep-suc-khoe', icon: '💄', order: 7 },
+    { name: 'Ô Tô - Xe Máy - Xe Đạp', slug: 'o-to-xe-may-xe-dap', icon: '🏍️', order: 8 },
+    { name: 'Thời Trang Nữ', slug: 'thoi-trang-nu', icon: '👗', order: 9 },
+    { name: 'Bách Hóa Online', slug: 'bach-hoa-online', icon: '🛒', order: 10 },
+    { name: 'Thể Thao - Dã Ngoại', slug: 'the-thao-da-ngoai', icon: '⚽', order: 11 },
+    { name: 'Thời Trang Nam', slug: 'thoi-trang-nam', icon: '👔', order: 12 },
+    { name: 'Hàng Quốc Tế', slug: 'hang-quoc-te', icon: '🌍', order: 13 },
+    { name: 'Máy Vi Tính', slug: 'may-vi-tinh', icon: '💻', order: 14 },
+  ];
+
+  for (const cat of categoriesData) {
+    await prisma.category.create({ data: cat });
+  }
+  console.log(`✅ Created ${categoriesData.length} categories`);
 
   // Create all products
   for (const product of products) {

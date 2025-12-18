@@ -17,6 +17,9 @@ interface ProductCardProps {
     image: string;
     category: string;
     stock: number;
+    soldCount?: number;      // Số lượng đã bán thực tế
+    avgRating?: number;      // Rating trung bình từ reviews
+    reviewCount?: number;    // Số lượng reviews
 }
 
 export default function ProductCard({
@@ -27,6 +30,9 @@ export default function ProductCard({
     image,
     category,
     stock,
+    soldCount = 0,           // Mặc định 0 nếu chưa bán
+    avgRating = 0,           // Mặc định 0 nếu chưa có review
+    reviewCount = 0,         // Mặc định 0 nếu chưa có review
 }: ProductCardProps) {
     const { addItem } = useCartStore();
     const { toggleItem, isInWishlist } = useWishlistStore();
@@ -36,13 +42,17 @@ export default function ProductCard({
         setIsInList(isInWishlist(id));
     }, [id, isInWishlist]);
 
-    // Deterministic values based on id
+    // Calculate sale percent (can be based on original price if available)
     const hashCode = id.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
     const salePercent = 10 + (Math.abs(hashCode) % 25);
     const originalPrice = Math.round(price * (1 + salePercent / 100));
-    const rating = (4 + (Math.abs(hashCode) % 10) / 10).toFixed(1);
-    const reviews = 100 + (Math.abs(hashCode) % 900);
-    const soldCount = 500 + (Math.abs(hashCode) % 9500);
+
+    // Format sold count
+    const formatSoldCount = (count: number) => {
+        if (count === 0) return '0';
+        if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+        return count.toString();
+    };
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -80,8 +90,8 @@ export default function ProductCard({
                     <button
                         onClick={handleToggleWishlist}
                         className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all ${isInList
-                                ? 'bg-red-500 text-white'
-                                : 'bg-white/90 text-gray-400 hover:text-red-500 shadow'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-white/90 text-gray-400 hover:text-red-500 shadow'
                             }`}
                     >
                         <Heart className={`h-4 w-4 ${isInList ? 'fill-current' : ''}`} />
@@ -130,17 +140,26 @@ export default function ProductCard({
                         {name}
                     </h3>
 
-                    {/* Rating */}
+                    {/* Rating & Sold */}
                     <div className="flex items-center gap-1 mb-2">
-                        <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                                <Star
-                                    key={i}
-                                    className={`h-3 w-3 ${i < Math.floor(Number(rating)) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
-                                />
-                            ))}
-                        </div>
-                        <span className="text-xs text-gray-400">| Đã bán {soldCount > 1000 ? `${(soldCount / 1000).toFixed(1)}k` : soldCount}</span>
+                        {avgRating > 0 ? (
+                            <>
+                                <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={`h-3 w-3 ${i < Math.floor(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-xs text-gray-500">{avgRating.toFixed(1)}</span>
+                                {reviewCount > 0 && <span className="text-xs text-gray-400">({reviewCount})</span>}
+                            </>
+                        ) : (
+                            <span className="text-xs text-gray-400">Chưa có đánh giá</span>
+                        )}
+                        <span className="text-xs text-gray-300">|</span>
+                        <span className="text-xs text-gray-400">Đã bán {formatSoldCount(soldCount)}</span>
                     </div>
 
                     {/* Price */}
