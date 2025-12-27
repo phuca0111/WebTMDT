@@ -77,6 +77,26 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Check if user has purchased and received the product
+        const hasPurchased = await prisma.order.findFirst({
+            where: {
+                userId: decoded.userId,
+                status: 'COMPLETED',
+                items: {
+                    some: {
+                        productId: productId
+                    }
+                }
+            }
+        });
+
+        if (!hasPurchased) {
+            return NextResponse.json(
+                { error: 'Bạn phải mua và nhận hàng thành công mới được đánh giá sản phẩm này' },
+                { status: 403 }
+            );
+        }
+
         // Check if user already reviewed this product
         const existingReview = await prisma.review.findUnique({
             where: {

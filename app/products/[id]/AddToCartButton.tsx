@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Minus, Plus, ShoppingCart, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/lib/store';
 import { toast } from 'sonner';
@@ -22,7 +23,9 @@ export default function AddToCartButton({
     stock,
 }: AddToCartButtonProps) {
     const [quantity, setQuantity] = useState(1);
+    const [loading, setLoading] = useState(false);
     const addItem = useCartStore((state) => state.addItem);
+    const router = useRouter();
 
     const handleAddToCart = () => {
         if (stock <= 0) {
@@ -31,11 +34,30 @@ export default function AddToCartButton({
         }
 
         for (let i = 0; i < quantity; i++) {
-            addItem({ id, name, price, image });
+            addItem({ id, name, price, image, stock });
         }
 
         toast.success(`Đã thêm ${quantity} "${name}" vào giỏ hàng`);
         setQuantity(1);
+    };
+
+    const handleBuyNow = () => {
+        if (stock <= 0) {
+            toast.error('Sản phẩm đã hết hàng');
+            return;
+        }
+
+        setLoading(true);
+
+        // Thêm vào giỏ hàng
+        for (let i = 0; i < quantity; i++) {
+            addItem({ id, name, price, image, stock });
+        }
+
+        toast.success('Đang chuyển đến trang thanh toán...');
+
+        // Redirect đến checkout
+        router.push('/checkout');
     };
 
     const decreaseQuantity = () => {
@@ -47,7 +69,7 @@ export default function AddToCartButton({
     };
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="space-y-4">
             {/* Quantity Selector */}
             <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">Số lượng:</span>
@@ -74,16 +96,32 @@ export default function AddToCartButton({
                 </div>
             </div>
 
-            {/* Add to Cart Button */}
-            <Button
-                onClick={handleAddToCart}
-                disabled={stock <= 0}
-                size="lg"
-                className="flex-1 gap-2"
-            >
-                <ShoppingCart className="h-5 w-5" />
-                {stock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                {/* Add to Cart Button */}
+                <Button
+                    onClick={handleAddToCart}
+                    disabled={stock <= 0}
+                    size="lg"
+                    variant="outline"
+                    className="flex-1 gap-2 border-[#1a94ff] text-[#1a94ff] hover:bg-[#f0f8ff]"
+                >
+                    <ShoppingCart className="h-5 w-5" />
+                    {stock <= 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
+                </Button>
+
+                {/* Buy Now Button */}
+                <Button
+                    onClick={handleBuyNow}
+                    disabled={stock <= 0 || loading}
+                    size="lg"
+                    className="flex-1 gap-2 bg-[#ff424e] hover:bg-[#e53e3e] text-white"
+                >
+                    <Zap className="h-5 w-5" />
+                    {loading ? 'Đang xử lý...' : 'Mua ngay'}
+                </Button>
+            </div>
         </div>
     );
 }
+

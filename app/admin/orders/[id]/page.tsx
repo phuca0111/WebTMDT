@@ -124,7 +124,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                                 <CardTitle>Trạng thái đơn hàng</CardTitle>
                             </CardHeader>
                             <CardContent className="flex items-center gap-4">
-                                <UpdateOrderStatus orderId={order.id} currentStatus={order.status} />
+                                <UpdateOrderStatus orderId={order.id} currentStatus={order.status} paymentMethod={order.paymentMethod || 'COD'} />
                                 <span className="text-sm text-gray-500">
                                     Cập nhật lần cuối: {formatDate(order.updatedAt)}
                                 </span>

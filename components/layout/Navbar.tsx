@@ -8,12 +8,12 @@ import {
     Search, ShoppingCart, User, Menu, X,
     Smartphone, Laptop, Tablet, Headphones,
     LogIn, UserCircle, Heart, Home, ChevronDown,
-    Truck, MapPin, Clock
+    Truck, MapPin, Clock, BadgeCheck, ShieldCheck, RotateCcw, Zap, Tag, CheckCircle, Flame, RefreshCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useCartStore, useWishlistStore } from '@/lib/store';
+import { useCartStore, useWishlistStore, useSearchHistoryStore } from '@/lib/store';
 
 const defaultCategories = [
     { name: 'Nhà Sách', href: '/products?category=Nhà+Sách', icon: '📚' },
@@ -41,6 +41,10 @@ interface UserData {
 export default function Navbar() {
     const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const { searches: searchHistory, addSearch, removeSearch } = useSearchHistoryStore();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [showCategories, setShowCategories] = useState(false);
@@ -58,6 +62,31 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Debounce search suggestions
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.trim().length >= 2) {
+                try {
+                    const res = await fetch(`/api/products?q=${encodeURIComponent(searchQuery)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data)) {
+                            setSuggestions(data.slice(0, 5));
+                            setShowSuggestions(true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch suggestions', error);
+                }
+            } else {
+                setSuggestions([]);
+                setShowSuggestions(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -73,9 +102,19 @@ export default function Navbar() {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        setShowSuggestions(false);
+        setIsSearchFocused(false);
         if (searchQuery.trim()) {
+            addSearch(searchQuery.trim());
             router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
         }
+    };
+
+    const handleHistoryClick = (query: string) => {
+        setSearchQuery(query);
+        addSearch(query);
+        setIsSearchFocused(false);
+        router.push(`/products?search=${encodeURIComponent(query)}`);
     };
 
     return (
@@ -105,6 +144,8 @@ export default function Navbar() {
                                     placeholder="Tìm sản phẩm, thương hiệu mong muốn..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                                     className="w-full h-10 pl-4 pr-24 bg-white border-0 rounded-lg text-gray-800 placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-white/50"
                                 />
                                 <button
@@ -114,6 +155,100 @@ export default function Navbar() {
                                     <Search className="h-4 w-4" />
                                     <span className="hidden sm:inline">Tìm kiếm</span>
                                 </button>
+
+                                {/* Search History Dropdown - Show when focused and no query */}
+                                {isSearchFocused && !searchQuery && searchHistory.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 overflow-hidden">
+                                        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-50">
+                                            <span className="text-xs text-gray-400 uppercase font-semibold tracking-wider">
+                                                Tìm kiếm gần đây
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => useSearchHistoryStore.getState().clearHistory()}
+                                                className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                                            >
+                                                Xóa tất cả
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 p-3">
+                                            {searchHistory.map((query) => (
+                                                <div
+                                                    key={query}
+                                                    className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1.5 group transition-colors"
+                                                >
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleHistoryClick(query)}
+                                                        className="text-sm text-gray-700"
+                                                    >
+                                                        {query}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            removeSearch(query);
+                                                        }}
+                                                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Search Suggestions */}
+                                {showSuggestions && suggestions.length > 0 && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 overflow-hidden">
+                                        <div className="text-xs text-gray-400 px-4 py-2 border-b border-gray-50 uppercase font-semibold tracking-wider">
+                                            Gợi ý tìm kiếm
+                                        </div>
+                                        {suggestions.map((product) => (
+                                            <Link
+                                                key={product.id}
+                                                href={`/products/${product.id}`}
+                                                onClick={() => {
+                                                    setShowSuggestions(false);
+                                                    addSearch(product.name);
+                                                }}
+                                                className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                                            >
+                                                <div className="relative w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
+                                                    <Image
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#1a94ff]">
+                                                        {product.name}
+                                                    </h4>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-xs font-bold text-[#ff424e]">
+                                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                                        </span>
+                                                        {product.stock <= 0 && (
+                                                            <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                                                                Hết hàng
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                        <button
+                                            type="submit"
+                                            className="w-full text-center text-sm text-[#1a94ff] hover:bg-blue-50 py-2.5 font-medium transition-colors border-t border-blue-50/50"
+                                        >
+                                            Xem tất cả kết quả cho "{searchQuery}"
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </form>
 
@@ -184,81 +319,50 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* Freeship Banner */}
-            <div className="bg-[#f0f8ff] border-b border-[#dbeafe]">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center justify-between h-9 text-sm">
-                        <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2 text-[#1a94ff]">
-                                <Truck className="h-4 w-4" />
-                                <span className="font-medium">Freeship</span>
-                                <span className="text-gray-600">đơn từ 1 triệu</span>
-                            </div>
-                            <div className="hidden md:flex items-center gap-2 text-gray-600">
-                                <Clock className="h-4 w-4 text-[#1a94ff]" />
-                                <span>Giao nhanh 2h</span>
-                            </div>
-                        </div>
-                        <div className="hidden md:flex items-center gap-4 text-sm">
-                            <Link href="/profile" className="text-gray-600 hover:text-[#1a94ff] transition">
-                                Theo dõi đơn hàng
-                            </Link>
-                            <span className="text-gray-300">|</span>
-                            <Link href="/admin" className="text-gray-600 hover:text-[#1a94ff] transition">
-                                Admin
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Category Bar */}
+            {/* Service Commitment & Quick Links Bar */}
             <div className="bg-white border-b border-gray-200 hidden lg:block">
                 <div className="container mx-auto px-4">
-                    <nav className="flex items-center gap-1 h-11">
-                        {/* Category Dropdown */}
-                        <div
-                            className="relative"
-                            onMouseEnter={() => setShowCategories(true)}
-                            onMouseLeave={() => setShowCategories(false)}
-                        >
-                            <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-[#1a94ff] font-medium">
-                                <Menu className="h-4 w-4" />
-                                Danh mục
-                                <ChevronDown className="h-3 w-3" />
-                            </button>
+                    <nav className="flex items-center justify-between h-10 text-sm">
+                        {/* Bên trái: Các cam kết dịch vụ */}
+                        <div className="flex items-center gap-6 text-gray-500 overflow-x-auto scrollbar-hide">
+                            <span className="flex items-center gap-1 font-bold text-blue-500 flex-shrink-0 uppercase text-xs">CAM KẾT</span>
 
-                            {showCategories && (
-                                <div className="absolute top-full left-0 bg-white rounded-lg shadow-xl border border-gray-100 py-2 min-w-[220px] max-h-[400px] overflow-y-auto z-50">
-                                    {defaultCategories.map((category) => (
-                                        <Link
-                                            key={category.name}
-                                            href={category.href}
-                                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-[#f5f5fa] hover:text-[#1a94ff] transition-colors"
-                                        >
-                                            <span className="text-lg">{category.icon}</span>
-                                            {category.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <CheckCircle className="h-4 w-4 text-blue-500" />
+                                <span>100% hàng thật</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <Truck className="h-4 w-4 text-blue-500" />
+                                <span>Freeship mọi đơn</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <ShieldCheck className="h-4 w-4 text-blue-500" />
+                                <span>Hoàn 200% nếu giả</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <RefreshCcw className="h-4 w-4 text-blue-500" />
+                                <span>30 ngày đổi trả</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <Zap className="h-4 w-4 text-blue-500" />
+                                <span>Giao nhanh 2h</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                <Tag className="h-4 w-4 text-blue-500" />
+                                <span>Giá siêu rẻ</span>
+                            </div>
                         </div>
 
-                        {/* Quick Links - Show first 6 categories */}
-                        {defaultCategories.slice(0, 6).map((category) => (
-                            <Link
-                                key={category.name}
-                                href={category.href}
-                                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-[#1a94ff] transition-colors"
-                            >
-                                <span>{category.icon}</span>
-                                {category.name}
+                        {/* Bên phải: Deal links */}
+                        <div className="flex items-center gap-6 flex-shrink-0 pl-4 border-l border-gray-200">
+                            <Link href="/deals/hot-coupon" className="flex items-center gap-1 text-orange-500 font-medium hover:opacity-80 transition-opacity whitespace-nowrap">
+                                <Flame className="h-4 w-4" />
+                                Deal Hot
                             </Link>
-                        ))}
-
-                        <div className="ml-auto flex items-center gap-4 text-sm">
-                            <span className="text-orange-500 font-medium">🔥 Deal Hot</span>
-                            <span className="text-[#1a94ff] font-medium">⚡ Flash Sale</span>
+                            <Link href="/deals/deal-soc" className="flex items-center gap-1 text-[#1a94ff] font-medium hover:opacity-80 transition-opacity whitespace-nowrap">
+                                <Zap className="h-4 w-4" />
+                                Flash Sale
+                            </Link>
                         </div>
                     </nav>
                 </div>

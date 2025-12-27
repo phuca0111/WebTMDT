@@ -3,12 +3,17 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProductCard from '@/components/products/ProductCard';
+import FlashSaleCountdown from '@/components/products/FlashSaleCountdown';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import prisma from '@/lib/db';
 import { Search, X, ChevronRight, Filter, SlidersHorizontal } from 'lucide-react';
+import ProductPriceFilter from '@/components/products/ProductPriceFilter';
+
+// Force dynamic rendering for Vercel deployment
+export const dynamic = 'force-dynamic';
 
 interface ProductsPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -19,10 +24,11 @@ type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name' | 'bestseller';
 const PAGE_SIZE = 20;
 
 async function getProducts({
-    category, search, sort, minPrice, maxPrice, brand, page = 1
+    category, search, sort, minPrice, maxPrice, brand, page = 1, isFlashSale
 }: {
     category?: string; search?: string; sort?: SortOption;
     minPrice?: number; maxPrice?: number; brand?: string[]; page?: number;
+    isFlashSale?: boolean;
 }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
@@ -39,6 +45,7 @@ async function getProducts({
         if (maxPrice !== undefined) where.price.lte = maxPrice;
     }
     if (brand && brand.length > 0) where.brand = { in: brand };
+    if (isFlashSale) where.isFlashSale = true;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let orderBy: any = { createdAt: 'desc' };
@@ -93,12 +100,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     const page = typeof params.page === 'string' ? parseInt(params.page) : 1;
     const minPrice = typeof params.minPrice === 'string' ? parseInt(params.minPrice) : undefined;
     const maxPrice = typeof params.maxPrice === 'string' ? parseInt(params.maxPrice) : undefined;
+    const isFlashSale = params.flash_sale === 'true';
     let selectedBrands: string[] = [];
     if (typeof params.brand === 'string') selectedBrands = [params.brand];
     else if (Array.isArray(params.brand)) selectedBrands = params.brand;
 
     const [{ products, total, totalPages }, { categories, brands }] = await Promise.all([
-        getProducts({ category, search, sort, minPrice, maxPrice, brand: selectedBrands, page }),
+        getProducts({ category, search, sort, minPrice, maxPrice, brand: selectedBrands, page, isFlashSale }),
         getFilterOptions(),
     ]);
 
@@ -131,6 +139,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                         )}
                     </nav>
 
+                    {/* Flash Sale Banner when sort=price-asc */}
+                    {sort === 'price-asc' && <FlashSaleCountdown />}
+
                     <div className="flex gap-4">
                         {/* Sidebar Filters */}
                         <aside className="hidden lg:block w-[200px] flex-shrink-0">
@@ -158,16 +169,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                                 {/* Price Range */}
                                 <div className="mb-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">Khoảng giá</h4>
-                                    <form action="/products" className="space-y-2">
-                                        {category && <input type="hidden" name="category" value={category} />}
-                                        {search && <input type="hidden" name="search" value={search} />}
-                                        <div className="flex items-center gap-1">
-                                            <Input type="number" name="minPrice" placeholder="₫ TỪ" defaultValue={minPrice} className="h-8 text-xs" />
-                                            <span className="text-gray-400">-</span>
-                                            <Input type="number" name="maxPrice" placeholder="₫ ĐẾN" defaultValue={maxPrice} className="h-8 text-xs" />
-                                        </div>
-                                        <Button size="sm" className="w-full bg-[#1a94ff] hover:bg-[#0d5cb6] text-xs h-8">Áp dụng</Button>
-                                    </form>
+                                    <ProductPriceFilter initialMin={minPrice} initialMax={maxPrice} />
                                 </div>
 
                                 {/* Brands */}

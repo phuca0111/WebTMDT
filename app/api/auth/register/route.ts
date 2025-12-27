@@ -40,6 +40,19 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        // Link guest orders (orders without userId that match the email)
+        const linkedOrders = await prisma.order.updateMany({
+            where: {
+                customerEmail: email,
+                userId: null, // Only link orders that don't have a user
+            },
+            data: {
+                userId: user.id,
+            },
+        });
+
+        console.log(`Linked ${linkedOrders.count} guest orders to new user ${user.email}`);
+
         return NextResponse.json({
             message: 'Đăng ký thành công!',
             user: {
@@ -47,6 +60,7 @@ export async function POST(request: NextRequest) {
                 name: user.name,
                 email: user.email,
             },
+            linkedOrders: linkedOrders.count,
         });
     } catch (error) {
         console.error('Register error:', error);

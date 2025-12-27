@@ -1,9 +1,11 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -38,7 +40,7 @@ model Product {
   id          String      @id @default(uuid())
   name        String
   description String?
-  price       Decimal     @db.Decimal(10, 2)
+  price       Decimal     @db.Decimal(20, 2)
   image       String
   category    String
   categoryId  String?
@@ -46,6 +48,7 @@ model Product {
   brand       String?
   stock       Int         @default(0)
   soldCount   Int         @default(0)  // Số lượng đã bán thực tế
+  isFlashSale Boolean     @default(false) // Sản phẩm đang chạy Flash Sale
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   
@@ -72,9 +75,9 @@ model Voucher {
   code         String       @unique
   description  String?
   discountType DiscountType @default(PERCENT)
-  discountValue Decimal     @db.Decimal(10, 2)
-  minOrderValue Decimal?    @db.Decimal(10, 2)
-  maxDiscount  Decimal?     @db.Decimal(10, 2) // Max discount for PERCENT type
+  discountValue Decimal     @db.Decimal(20, 2)
+  minOrderValue Decimal?    @db.Decimal(20, 2)
+  maxDiscount  Decimal?     @db.Decimal(20, 2) // Max discount for PERCENT type
   usageLimit   Int?         // Max times voucher can be used
   usedCount    Int          @default(0)
   expiresAt    DateTime?
@@ -96,9 +99,9 @@ model Order {
   customerEmail String
   customerPhone String
   address       String
-  subtotal      Decimal     @db.Decimal(10, 2) @default(0)
-  discount      Decimal     @db.Decimal(10, 2) @default(0)
-  total         Decimal     @db.Decimal(10, 2)
+  subtotal      Decimal     @db.Decimal(20, 2) @default(0)
+  discount      Decimal     @db.Decimal(20, 2) @default(0)
+  total         Decimal     @db.Decimal(20, 2)
   status        OrderStatus @default(PENDING)
   paymentMethod String
   paymentId     String?
@@ -115,7 +118,7 @@ model Order {
 model OrderItem {
   id        String  @id @default(uuid())
   quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  price     Decimal @db.Decimal(20, 2)
   
   orderId   String
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -126,9 +129,89 @@ model OrderItem {
 }
 
 model Admin {
-  id       String @id @default(uuid())
-  username String @unique
+  id       String    @id @default(uuid())
+  username String    @unique
   password String
+  role     AdminRole @default(STAFF)
+  name     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  MANAGER
+  STAFF
+}
+
+model SeoSettings {
+  id              String   @id @default(uuid())
+  pageType        String   @unique // homepage, products, about, contact
+  metaTitle       String
+  metaDescription String
+  ogImage         String?
+  keywords        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Banner {
+  id          String    @id @default(uuid())
+  title       String
+  image       String
+  link        String?
+  position    String    // hero, sidebar, popup
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String   // flash_sale, discount, freeship
+  discount    Decimal? @db.Decimal(10, 2)
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteTheme {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  displayName     String
+  description     String?
+  primaryColor    String   @default("#1a94ff")
+  secondaryColor  String   @default("#ff424e")
+  accentColor     String   @default("#00ab56")
+  backgroundColor String   @default("#f5f5fa")
+  headerBg        String   @default("#ffffff")
+  navbarStyle     String   @default("default")
+  bannerImage     String?
+  snowEffect      Boolean  @default(false)
+  fireworkEffect  Boolean  @default(false)
+  specialIcon     String?
+  isActive        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FlashSale {
+  id          String    @id @default(uuid())
+  name        String    @default("Flash Sale")
+  isActive    Boolean   @default(true)
+  startTime   DateTime  // Thời gian bắt đầu (có thể để null = luôn chạy theo slot)
+  endTime     DateTime  // Thời gian kết thúc
+  timeSlots   String    @default("0,9,12,15,18,21") // Các khung giờ, phân cách bằng dấu phẩy
+  discountPercent Int   @default(20) // % giảm giá mặc định
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 enum OrderStatus {

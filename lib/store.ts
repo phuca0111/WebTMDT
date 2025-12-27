@@ -7,6 +7,7 @@ export interface CartItem {
     price: number;
     image: string;
     quantity: number;
+    stock: number;
 }
 
 interface CartStore {
@@ -29,6 +30,9 @@ export const useCartStore = create<CartStore>()(
                 const existingItem = items.find((i) => i.id === item.id);
 
                 if (existingItem) {
+                    if (existingItem.quantity >= item.stock) {
+                        return; // Cannot add more than stock
+                    }
                     set({
                         items: items.map((i) =>
                             i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
@@ -44,12 +48,22 @@ export const useCartStore = create<CartStore>()(
             },
 
             updateQuantity: (id, quantity) => {
+                const items = get().items;
+                const item = items.find((i) => i.id === id);
+
+                if (!item) return;
+
                 if (quantity <= 0) {
                     get().removeItem(id);
                     return;
                 }
+
+                if (quantity > item.stock) {
+                    return; // Cannot exist stock
+                }
+
                 set({
-                    items: get().items.map((i) =>
+                    items: items.map((i) =>
                         i.id === id ? { ...i, quantity } : i
                     ),
                 });
@@ -130,3 +144,77 @@ export const useWishlistStore = create<WishlistStore>()(
     )
 );
 
+// Search History Store
+interface SearchHistoryStore {
+    searches: string[];
+    addSearch: (query: string) => void;
+    removeSearch: (query: string) => void;
+    clearHistory: () => void;
+}
+
+const MAX_SEARCH_HISTORY = 10;
+
+export const useSearchHistoryStore = create<SearchHistoryStore>()(
+    persist(
+        (set, get) => ({
+            searches: [],
+
+            addSearch: (query) => {
+                const trimmed = query.trim().toLowerCase();
+                if (!trimmed) return;
+
+                const searches = get().searches.filter(s => s !== trimmed);
+                searches.unshift(trimmed);
+                set({ searches: searches.slice(0, MAX_SEARCH_HISTORY) });
+            },
+
+            removeSearch: (query) => {
+                set({ searches: get().searches.filter(s => s !== query) });
+            },
+
+            clearHistory: () => set({ searches: [] }),
+        }),
+        {
+            name: 'search-history-storage',
+        }
+    )
+);
+
+// Compare Store
+export interface CompareItem {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+    category: string;
+    avgRating?: number;
+    soldCount?: number;
+    brand?: string | null;
+}
+
+interface CompareStore {
+    items: CompareItem[];
+    addItem: (item: CompareItem) => void;
+    removeItem: (id: string) => void;
+    clearCompare: () => void;
+    isInCompare: (id: string) => boolean;
+}
+
+export const useCompareStore = create<CompareStore>()(
+    persist(
+        (set, get) => ({
+            items: [],
+            addItem: (item) => {
+                const items = get().items;
+                if (items.length >= 3) return; // Limit 3
+                if (!items.find((i) => i.id === item.id)) {
+                    set({ items: [...items, item] });
+                }
+            },
+            removeItem: (id) => set({ items: get().items.filter((i) => i.id !== id) }),
+            clearCompare: () => set({ items: [] }),
+            isInCompare: (id) => !!get().items.find((i) => i.id === id),
+        }),
+        { name: 'compare-storage' }
+    )
+);

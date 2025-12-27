@@ -35,7 +35,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Create JWT token
-        const token = await new SignJWT({ adminId: admin.id, username: admin.username })
+        const token = await new SignJWT({
+            adminId: admin.id,
+            username: admin.username,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            role: (admin as any).role
+        })
             .setProtectedHeader({ alg: 'HS256' })
             .setExpirationTime('24h')
             .sign(JWT_SECRET);

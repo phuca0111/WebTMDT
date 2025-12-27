@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import prisma from '@/lib/db';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 
@@ -63,6 +65,20 @@ export async function POST(request: NextRequest) {
         }
 
         // Create order with items
+        let userId = null;
+        const cookieStore = await cookies();
+        const token = cookieStore.get('user-token')?.value;
+        const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
+
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+                userId = decoded.userId;
+            } catch (err) {
+                console.log('Invalid token, processing as guest order');
+            }
+        }
+
         const order = await prisma.order.create({
             data: {
                 customerName,
@@ -75,6 +91,7 @@ export async function POST(request: NextRequest) {
                 paymentMethod,
                 status: 'PENDING',
                 voucherId: voucherId || null,
+                userId: userId, // Link order to user if logged in
                 items: {
                     create: items.map((item: { productId: string; quantity: number; price: number }) => ({
                         productId: item.productId,

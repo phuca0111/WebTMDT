@@ -12,7 +12,7 @@ export default function Footer() {
                         <ul className="space-y-2 text-xs text-gray-500">
                             <li><Link href="/" className="hover:underline">Hotline: <strong className="text-gray-800">1900-9999</strong> <span className="text-gray-400">(1000đ/phút)</span></Link></li>
                             <li><Link href="/" className="hover:underline">Các câu hỏi thường gặp</Link></li>
-                            <li><Link href="/" className="hover:underline">Gửi yêu cầu hỗ trợ</Link></li>
+                            <li><Link href="/contact" className="hover:underline">Gửi yêu cầu hỗ trợ</Link></li>
                             <li><Link href="/" className="hover:underline">Hướng dẫn đặt hàng</Link></li>
                             <li><Link href="/" className="hover:underline">Phương thức vận chuyển</Link></li>
                             <li><Link href="/" className="hover:underline">Chính sách đổi trả</Link></li>
@@ -24,10 +24,11 @@ export default function Footer() {
                     <div>
                         <h4 className="font-medium text-base mb-4 text-gray-900">Nhom2</h4>
                         <ul className="space-y-2 text-xs text-gray-500 mb-6">
-                            <li><Link href="/" className="hover:underline">Giới thiệu Tiki</Link></li>
+                            <li><Link href="/about" className="hover:underline">Giới thiệu Tiki</Link></li>
                             <li><Link href="/" className="hover:underline">Tuyển dụng</Link></li>
                             <li><Link href="/" className="hover:underline">Chính sách bảo mật thanh toán</Link></li>
                             <li><Link href="/" className="hover:underline">Bán hàng cùng Nhom2</Link></li>
+                            <li><Link href="/settings/theme" className="hover:underline flex items-center gap-1">🎨 Cài đặt giao diện</Link></li>
                         </ul>
 
                         <h4 className="font-medium text-base mb-4 text-gray-900">Thanh toán</h4>
@@ -65,9 +66,9 @@ export default function Footer() {
                     <div>
                         <h4 className="font-medium text-base mb-4 text-gray-900">Kết nối với chúng tôi</h4>
                         <div className="flex gap-3 mb-6">
-                            <Link href="#" className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:opacity-90"><Facebook className="h-4 w-4" /></Link>
-                            <Link href="#" className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center hover:opacity-90"><Youtube className="h-4 w-4" /></Link>
-                            <Link href="#" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white flex items-center justify-center hover:opacity-90"><Instagram className="h-4 w-4" /></Link>
+                            <Link href="https://www.facebook.com/?locale=vi_VN" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center hover:opacity-90"><Facebook className="h-4 w-4" /></Link>
+                            <Link href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center hover:opacity-90"><Youtube className="h-4 w-4" /></Link>
+                            <Link href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 text-white flex items-center justify-center hover:opacity-90"><Instagram className="h-4 w-4" /></Link>
                         </div>
 
                         <h4 className="font-medium text-base mb-4 text-gray-900">Tải ứng dụng PhucNow</h4>

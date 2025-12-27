@@ -10,10 +10,61 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import LogoutButton from './LogoutButton';
+import CancelOrderButton from './CancelOrderButton';
+import OrderTabs from './OrderTabs';
+import { auth } from '@/lib/auth-config';
+
+// Force dynamic rendering for Vercel deployment
+export const dynamic = 'force-dynamic';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key';
 
 async function getUser() {
+    // First, check NextAuth session (for Google login)
+    const session = await auth();
+
+    if (session?.user?.email) {
+        // Find user first
+        let user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+        });
+
+        if (user) {
+            // Link any guest orders that haven't been linked yet
+            await prisma.order.updateMany({
+                where: {
+                    customerEmail: {
+                        equals: session.user.email,
+                        mode: 'insensitive',
+                    },
+                    userId: null,
+                },
+                data: {
+                    userId: user.id,
+                },
+            });
+
+            // Now fetch user with orders
+            const userWithOrders = await prisma.user.findUnique({
+                where: { email: session.user.email },
+                include: {
+                    orders: {
+                        include: {
+                            items: {
+                                include: {
+                                    product: true,
+                                },
+                            },
+                        },
+                        orderBy: { createdAt: 'desc' },
+                    },
+                },
+            });
+            return userWithOrders;
+        }
+    }
+
+    // Fallback: check JWT token (for email/password login)
     const cookieStore = await cookies();
     const token = cookieStore.get('user-token')?.value;
 
@@ -129,74 +180,16 @@ export default async function ProfilePage() {
 
                         {/* Orders */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-2xl shadow-sm p-6">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <Package className="h-5 w-5 text-indigo-600" />
-                                    <h2 className="text-lg font-bold text-slate-800">Lịch sử đơn hàng</h2>
-                                </div>
-
-                                {user.orders.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                        <p className="text-slate-500 mb-4">Bạn chưa có đơn hàng nào</p>
-                                        <Link href="/products">
-                                            <Button>Mua sắm ngay</Button>
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {user.orders.map((order) => (
-                                            <div
-                                                key={order.id}
-                                                className="border border-slate-100 rounded-xl p-4 hover:border-indigo-200 transition-colors"
-                                            >
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <div>
-                                                        <p className="font-mono text-xs text-slate-500">#{order.id.slice(0, 8)}</p>
-                                                        <p className="text-sm text-slate-500">{formatDate(order.createdAt)}</p>
-                                                    </div>
-                                                    <Badge className={statusColors[order.status]}>
-                                                        {statusLabels[order.status]}
-                                                    </Badge>
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                    {order.items.slice(0, 2).map((item) => (
-                                                        <div key={item.id} className="flex items-center gap-3">
-                                                            <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden">
-                                                                <img
-                                                                    src={item.product.image}
-                                                                    alt={item.product.name}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-medium text-slate-800 truncate">
-                                                                    {item.product.name}
-                                                                </p>
-                                                                <p className="text-xs text-slate-500">x{item.quantity}</p>
-                                                            </div>
-                                                            <p className="text-sm font-medium text-indigo-600">
-                                                                {formatPrice(Number(item.price) * item.quantity)}
-                                                            </p>
-                                                        </div>
-                                                    ))}
-                                                    {order.items.length > 2 && (
-                                                        <p className="text-xs text-slate-400">
-                                                            +{order.items.length - 2} sản phẩm khác
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
-                                                    <p className="text-sm text-slate-500">Tổng cộng:</p>
-                                                    <p className="font-bold text-indigo-600">{formatPrice(Number(order.total))}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <OrderTabs orders={user.orders.map(o => ({
+                                ...o,
+                                subtotal: Number(o.subtotal),
+                                discount: Number(o.discount),
+                                total: Number(o.total),
+                                items: o.items.map(item => ({
+                                    ...item,
+                                    price: Number(item.price),
+                                })),
+                            }))} />
                         </div>
                     </div>
                 </div>
