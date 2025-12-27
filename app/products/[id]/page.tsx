@@ -11,6 +11,9 @@ import AddToCartButton from './AddToCartButton';
 import ProductReviews from '@/components/products/ProductReviews';
 import ProductCard from '@/components/products/ProductCard';
 
+// Force dynamic rendering for Vercel deployment
+export const dynamic = 'force-dynamic';
+
 interface ProductDetailPageProps {
     params: Promise<{ id: string }>;
 }
@@ -188,8 +191,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                                 </div>
 
                                 {/* Stock */}
-                                {product.stock > 0 && product.stock <= 10 && (
-                                    <p className="text-sm text-orange-600 mb-4">⚡ Chỉ còn {product.stock} sản phẩm</p>
+                                {/* Stock */}
+                                {product.stock > 0 ? (
+                                    <div className="flex items-center gap-2 mb-4 text-sm">
+                                        <span className="text-green-600 font-medium">✔ Còn hàng</span>
+                                        <span className="text-gray-300">|</span>
+                                        <span className="text-gray-500">Còn {product.stock} sản phẩm</span>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-red-600 mb-4 font-bold">Hết hàng</p>
                                 )}
 
                                 {/* Add to Cart */}

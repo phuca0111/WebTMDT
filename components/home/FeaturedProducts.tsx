@@ -23,7 +23,7 @@ export default async function FeaturedProducts() {
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-800">Sản phẩm nổi bật</h2>
                 <Link
-                    href="/products"
+                    href="/products?sort=bestseller"
                     className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium"
                 >
                     Xem tất cả

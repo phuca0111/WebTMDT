@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, ShoppingCart, ChevronRight, Truck, Shield } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart, ChevronRight, Truck, Shield, BadgeCheck, ShieldCheck, RotateCcw, Zap, Tag } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/format';
+import { toast } from 'sonner';
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
@@ -51,6 +52,46 @@ export default function CartPage() {
                         <ChevronRight className="h-3 w-3 text-gray-400" />
                         <span className="text-gray-800">Giỏ hàng ({totalItems})</span>
                     </nav>
+
+                    {/* Trust Badges */}
+                    <div className="bg-white rounded-lg p-3 mb-4 flex flex-wrap items-center gap-4 text-sm shadow-sm">
+                        <span className="font-bold text-[#1a94ff] uppercase mr-2">Cam kết</span>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <BadgeCheck className="h-4 w-4 text-[#1a94ff]" />
+                            <span>100% hàng thật</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-200 hidden md:block"></div>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <Truck className="h-4 w-4 text-[#1a94ff]" />
+                            <span>Freeship mọi đơn</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-200 hidden md:block"></div>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <ShieldCheck className="h-4 w-4 text-[#1a94ff]" />
+                            <span>Hoàn 200% nếu hàng giả</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-200 hidden lg:block"></div>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <RotateCcw className="h-4 w-4 text-[#1a94ff]" />
+                            <span>30 ngày đổi trả</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-200 hidden lg:block"></div>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <Zap className="h-4 w-4 text-[#1a94ff]" />
+                            <span>Giao nhanh 2h</span>
+                        </div>
+                        <div className="w-px h-4 bg-gray-200 hidden xl:block"></div>
+
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                            <Tag className="h-4 w-4 text-[#1a94ff]" />
+                            <span>Giá siêu rẻ</span>
+                        </div>
+                    </div>
 
                     <div className="flex gap-4">
                         {/* Cart Items */}
@@ -110,8 +151,15 @@ export default function CartPage() {
                                                 </button>
                                                 <span className="w-10 text-center text-sm">{item.quantity}</span>
                                                 <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+                                                    onClick={() => {
+                                                        if (item.stock && item.quantity >= item.stock) {
+                                                            toast.error(`Chỉ còn ${item.stock} sản phẩm trong kho`);
+                                                            return;
+                                                        }
+                                                        updateQuantity(item.id, item.quantity + 1);
+                                                    }}
+                                                    disabled={!!(item.stock && item.quantity >= item.stock)}
+                                                    className={`w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 ${item.stock && item.quantity >= item.stock ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
                                                     <Plus className="h-3 w-3" />
                                                 </button>
@@ -124,7 +172,19 @@ export default function CartPage() {
                                             <div className="flex items-center border rounded mt-1 inline-flex">
                                                 <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-6 h-6 flex items-center justify-center"><Minus className="h-3 w-3" /></button>
                                                 <span className="w-6 text-center text-xs">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-6 h-6 flex items-center justify-center"><Plus className="h-3 w-3" /></button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (item.stock && item.quantity >= item.stock) {
+                                                            toast.error(`Chỉ còn ${item.stock} sản phẩm`);
+                                                            return;
+                                                        }
+                                                        updateQuantity(item.id, item.quantity + 1);
+                                                    }}
+                                                    disabled={!!(item.stock && item.quantity >= item.stock)}
+                                                    className={`w-6 h-6 flex items-center justify-center ${item.stock && item.quantity >= item.stock ? 'opacity-50' : ''}`}
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                </button>
                                             </div>
                                         </div>
 

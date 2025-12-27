@@ -26,6 +26,7 @@ export default function WishlistPage() {
             name: item.name,
             price: item.price,
             image: item.image,
+            stock: 999, // Default stock for wishlist items
         });
         toast.success(`Đã thêm "${item.name}" vào giỏ hàng`);
     };
@@ -42,6 +43,7 @@ export default function WishlistPage() {
                 name: item.name,
                 price: item.price,
                 image: item.image,
+                stock: 999, // Default stock for wishlist items
             });
         });
         clearWishlist();

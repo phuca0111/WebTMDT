@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
@@ -30,11 +30,30 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-const categories = ['Điện thoại', 'Laptop', 'Tablet', 'Phụ kiện'];
+interface Category {
+    id: string;
+    name: string;
+    icon?: string;
+}
 
 export default function NewProductPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    // Fetch categories from API
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                setCategories(data);
+            } catch (error) {
+                console.error('Failed to fetch categories:', error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const {
         register,
@@ -136,7 +155,9 @@ export default function NewProductPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {categories.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    <SelectItem key={cat.id} value={cat.name}>
+                                        {cat.icon} {cat.name}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

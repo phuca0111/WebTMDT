@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, ShoppingCart, Truck, Heart, BadgeCheck } from 'lucide-react';
+import { Star, ShoppingCart, Truck, Heart, BadgeCheck, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCartStore, useWishlistStore } from '@/lib/store';
+import { useCartStore, useWishlistStore, useCompareStore } from '@/lib/store';
 import { formatPrice } from '@/lib/format';
 import { toast } from 'sonner';
 
@@ -36,13 +36,16 @@ export default function ProductCard({
 }: ProductCardProps) {
     const { addItem } = useCartStore();
     const { toggleItem, isInWishlist } = useWishlistStore();
+    const { items: compareItems, addItem: addToCompare, removeItem: removeFromCompare } = useCompareStore();
+
     const [isInList, setIsInList] = useState(false);
+    const isInCompare = compareItems.some(i => i.id === id);
 
     useEffect(() => {
         setIsInList(isInWishlist(id));
     }, [id, isInWishlist]);
 
-    // Calculate sale percent (can be based on original price if available)
+    // Calculate sale percent
     const hashCode = id.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0);
     const salePercent = 10 + (Math.abs(hashCode) % 25);
     const originalPrice = Math.round(price * (1 + salePercent / 100));
@@ -57,7 +60,7 @@ export default function ProductCard({
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         if (stock <= 0) return;
-        addItem({ id, name, price, image });
+        addItem({ id, name, price, image, stock });
         toast.success(`Đã thêm "${name}" vào giỏ hàng`);
     };
 
@@ -66,6 +69,21 @@ export default function ProductCard({
         toggleItem({ id, name, price, image, category });
         setIsInList(!isInList);
         toast.success(isInList ? `Đã xóa khỏi yêu thích` : `Đã thêm vào yêu thích`);
+    };
+
+    const handleToggleCompare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isInCompare) {
+            removeFromCompare(id);
+            toast.info('Đã xóa khỏi so sánh');
+        } else {
+            if (compareItems.length >= 3) {
+                toast.error('Chỉ được so sánh tối đa 3 sản phẩm');
+                return;
+            }
+            addToCompare({ id, name, price, image, category, avgRating, soldCount });
+            toast.success('Đã thêm vào so sánh');
+        }
     };
 
     return (
@@ -86,16 +104,31 @@ export default function ProductCard({
                         -{salePercent}%
                     </div>
 
-                    {/* Wishlist Button */}
-                    <button
-                        onClick={handleToggleWishlist}
-                        className={`absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all ${isInList
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white/90 text-gray-400 hover:text-red-500 shadow'
-                            }`}
-                    >
-                        <Heart className={`h-4 w-4 ${isInList ? 'fill-current' : ''}`} />
-                    </button>
+                    {/* Buttons Group: Wishlist & Compare */}
+                    <div className="absolute top-2 right-2 flex flex-col gap-2">
+                        {/* Wishlist Button */}
+                        <button
+                            onClick={handleToggleWishlist}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${isInList
+                                ? 'bg-red-500 text-white'
+                                : 'bg-white/90 text-gray-400 hover:text-red-500 shadow'
+                                }`}
+                        >
+                            <Heart className={`h-4 w-4 ${isInList ? 'fill-current' : ''}`} />
+                        </button>
+
+                        {/* Compare Button */}
+                        <button
+                            onClick={handleToggleCompare}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${isInCompare
+                                ? 'bg-[#1a94ff] text-white'
+                                : 'bg-white/90 text-gray-400 hover:text-[#1a94ff] shadow'
+                                }`}
+                            title="So sánh"
+                        >
+                            <Scale className="h-4 w-4" />
+                        </button>
+                    </div>
 
                     {/* Out of Stock */}
                     {stock <= 0 && (
@@ -160,6 +193,8 @@ export default function ProductCard({
                         )}
                         <span className="text-xs text-gray-300">|</span>
                         <span className="text-xs text-gray-400">Đã bán {formatSoldCount(soldCount)}</span>
+                        <span className="text-xs text-gray-300">|</span>
+                        <span className="text-xs text-blue-500">Còn {formatSoldCount(stock)}</span>
                     </div>
 
                     {/* Price */}

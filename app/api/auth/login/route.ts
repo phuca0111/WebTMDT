@@ -40,6 +40,28 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Link guest orders (orders without userId that match the email)
+        // This handles the case where user has account but ordered while not logged in
+        // Use case-insensitive email matching
+        const linkedOrders = await prisma.order.updateMany({
+            where: {
+                customerEmail: {
+                    equals: user.email,
+                    mode: 'insensitive',
+                },
+                userId: null,
+            },
+            data: {
+                userId: user.id,
+            },
+        });
+
+        if (linkedOrders.count > 0) {
+            console.log(`✅ Linked ${linkedOrders.count} guest orders to user ${user.email}`);
+        } else {
+            console.log(`ℹ️ No guest orders found for ${user.email}`);
+        }
+
         // Generate JWT token
         const token = jwt.sign(
             { userId: user.id, email: user.email },
